@@ -8,5 +8,3 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 using var host = builder.Build();
-
-// Composition root — add CLI commands and MediatR handlers when implementing features.
