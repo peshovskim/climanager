@@ -1,6 +1,6 @@
 namespace CliManager.Domain.Drive;
 
-public sealed class SyncManifestEntry
+public sealed class SyncEntry
 {
     public int Id { get; set; }
 
