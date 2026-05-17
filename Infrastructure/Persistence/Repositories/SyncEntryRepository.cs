@@ -14,6 +14,14 @@ public sealed class SyncEntryRepository(CliManagerDbContext dbContext) : ISyncEn
             .FirstOrDefaultAsync(entry => entry.DriveFileId == driveFileId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<SyncEntry>> GetAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SyncEntries
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task UpsertAsync(SyncEntry entry, CancellationToken cancellationToken = default)
     {
         SyncEntry? existing = await GetByDriveFileIdAsync(entry.DriveFileId, cancellationToken);
@@ -27,5 +35,17 @@ public sealed class SyncEntryRepository(CliManagerDbContext dbContext) : ISyncEn
         existing.FileName = entry.FileName;
         existing.LocalPath = entry.LocalPath;
         existing.DownloadedAt = entry.DownloadedAt;
+    }
+
+    public async Task DeleteByDriveFileIdAsync(
+        string driveFileId,
+        CancellationToken cancellationToken = default)
+    {
+        SyncEntry? existing = await GetByDriveFileIdAsync(driveFileId, cancellationToken);
+
+        if (existing is not null)
+        {
+            dbContext.SyncEntries.Remove(existing);
+        }
     }
 }

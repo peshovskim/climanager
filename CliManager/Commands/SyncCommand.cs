@@ -23,7 +23,9 @@ public sealed class SyncCommand(IMediator mediator) : AsyncCommand
 
         AnsiConsole.MarkupLine("[bold]Sync complete[/]");
         AnsiConsole.MarkupLine($"Total files: [cyan]{stats.TotalFiles}[/]");
-        AnsiConsole.MarkupLine($"Successful: [green]{stats.SuccessfulDownloads}[/]");
+        AnsiConsole.MarkupLine($"Downloaded: [green]{stats.SuccessfulDownloads}[/]");
+        AnsiConsole.MarkupLine($"Skipped (unchanged): [yellow]{stats.SkippedDownloads}[/]");
+        AnsiConsole.MarkupLine($"Removed (deleted on Drive): [dim]{stats.RemovedLocalFiles}[/]");
         AnsiConsole.MarkupLine($"Failed: [red]{stats.FailedDownloads}[/]");
         AnsiConsole.MarkupLine($"Elapsed: [dim]{stats.Elapsed:hh\\:mm\\:ss\\.fff}[/]");
 

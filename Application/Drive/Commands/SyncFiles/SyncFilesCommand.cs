@@ -1,9 +1,9 @@
 using System.Diagnostics;
+using CliManager.Application.Common.Abstractions;
 using CliManager.Application.Drive.Interfaces;
 using CliManager.Application.Drive.Options;
 using CliManager.Application.Drive.Repositories;
 using CliManager.Application.Drive.Responses;
-using CliManager.Application.Common.Abstractions;
 using CliManager.Domain.Drive;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,11 +35,19 @@ public sealed class SyncFilesCommandHandler(
 
             int totalFiles = files.Count;
             int successfulDownloads = 0;
+            int skippedDownloads = 0;
             int failedDownloads = 0;
 
             var stopwatch = Stopwatch.StartNew();
             string downloadsRoot = syncOptions.Value.DownloadsPath;
             Directory.CreateDirectory(downloadsRoot);
+
+            IReadOnlyDictionary<string, SyncEntry> manifestByDriveId =
+                await LoadManifestAsync(cancellationToken);
+
+            var driveFileIds = files
+                .Select(file => file.Id)
+                .ToHashSet(StringComparer.Ordinal);
 
             var parallelOptions = new ParallelOptions
             {
@@ -51,9 +59,19 @@ public sealed class SyncFilesCommandHandler(
             {
                 try
                 {
-                    string localPath = ResolveLocalPath(downloadsRoot, file);
+                    string localPath = ResolveLocalPath(downloadsRoot, file.Name);
+                    manifestByDriveId.TryGetValue(file.Id, out SyncEntry? existingEntry);
+
+                    if (IsUnchanged(file, existingEntry, localPath))
+                    {
+                        Interlocked.Increment(ref skippedDownloads);
+                        return;
+                    }
+
+                    RemoveStaleLocalFile(existingEntry, localPath);
 
                     await driveFileRepository.DownloadAsync(file, localPath, ct);
+                    ApplyDriveModifiedTime(localPath, file);
 
                     using IServiceScope scope = scopeFactory.CreateScope();
                     var syncEntryRepository =
@@ -80,13 +98,19 @@ public sealed class SyncFilesCommandHandler(
                 }
             });
 
+            int removedLocalFiles = await RemoveFilesDeletedOnDriveAsync(
+                driveFileIds,
+                cancellationToken);
+
             stopwatch.Stop();
 
             return Result<SyncResultResponse>.Success(
                 new SyncResultResponse(
                     totalFiles,
                     successfulDownloads,
+                    skippedDownloads,
                     failedDownloads,
+                    removedLocalFiles,
                     stopwatch.Elapsed));
         }
         catch (FileNotFoundException ex)
@@ -99,21 +123,119 @@ public sealed class SyncFilesCommandHandler(
         }
     }
 
-    private static string ResolveLocalPath(string downloadsRoot, DriveFile file)
+    private async Task<IReadOnlyDictionary<string, SyncEntry>> LoadManifestAsync(
+        CancellationToken cancellationToken)
     {
-        string safeName = SanitizeFileName(file.Name);
-        string localPath = Path.Combine(downloadsRoot, safeName);
+        using IServiceScope scope = scopeFactory.CreateScope();
+        var syncEntryRepository =
+            scope.ServiceProvider.GetRequiredService<ISyncEntryRepository>();
 
-        if (!File.Exists(localPath))
+        IReadOnlyList<SyncEntry> entries =
+            await syncEntryRepository.GetAllAsync(cancellationToken);
+
+        return entries.ToDictionary(entry => entry.DriveFileId, StringComparer.Ordinal);
+    }
+
+    private async Task<int> RemoveFilesDeletedOnDriveAsync(
+        IReadOnlySet<string> driveFileIds,
+        CancellationToken cancellationToken)
+    {
+        using IServiceScope scope = scopeFactory.CreateScope();
+        var syncEntryRepository =
+            scope.ServiceProvider.GetRequiredService<ISyncEntryRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        IReadOnlyList<SyncEntry> entries =
+            await syncEntryRepository.GetAllAsync(cancellationToken);
+
+        int removed = 0;
+
+        foreach (SyncEntry entry in entries)
         {
-            return localPath;
+            if (driveFileIds.Contains(entry.DriveFileId))
+            {
+                continue;
+            }
+
+            if (File.Exists(entry.LocalPath))
+            {
+                File.Delete(entry.LocalPath);
+            }
+
+            await syncEntryRepository.DeleteByDriveFileIdAsync(
+                entry.DriveFileId,
+                cancellationToken);
+
+            removed++;
         }
 
-        string extension = Path.GetExtension(safeName);
-        string nameWithoutExtension = Path.GetFileNameWithoutExtension(safeName);
+        if (removed > 0)
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
-        return Path.Combine(downloadsRoot, $"{nameWithoutExtension}_{file.Id}{extension}");
+        return removed;
     }
+
+    private static bool IsUnchanged(DriveFile file, SyncEntry? entry, string localPath)
+    {
+        if (!File.Exists(localPath))
+        {
+            return false;
+        }
+
+        if (entry is not null && !PathsEqual(entry.LocalPath, localPath))
+        {
+            return false;
+        }
+
+        if (file.ModifiedTime is null)
+        {
+            return false;
+        }
+
+        DateTime driveModifiedUtc = file.ModifiedTime.Value.UtcDateTime;
+        DateTime localModifiedUtc = File.GetLastWriteTimeUtc(localPath);
+
+        return localModifiedUtc >= driveModifiedUtc;
+    }
+
+    private static void ApplyDriveModifiedTime(string localPath, DriveFile file)
+    {
+        if (file.ModifiedTime is null)
+        {
+            return;
+        }
+
+        File.SetLastWriteTimeUtc(localPath, file.ModifiedTime.Value.UtcDateTime);
+    }
+
+    private static void RemoveStaleLocalFile(SyncEntry? entry, string localPath)
+    {
+        if (entry is null || string.IsNullOrWhiteSpace(entry.LocalPath))
+        {
+            return;
+        }
+
+        if (PathsEqual(entry.LocalPath, localPath))
+        {
+            return;
+        }
+
+        if (File.Exists(entry.LocalPath))
+        {
+            File.Delete(entry.LocalPath);
+        }
+    }
+
+    private static string ResolveLocalPath(string downloadsRoot, string fileName) =>
+        Path.Combine(downloadsRoot, SanitizeFileName(fileName));
+
+    private static bool PathsEqual(string left, string right) =>
+        string.Equals(
+            Path.GetFullPath(left),
+            Path.GetFullPath(right),
+            StringComparison.OrdinalIgnoreCase);
 
     private static string SanitizeFileName(string fileName)
     {
