@@ -14,8 +14,8 @@ public sealed class TypeRegistrar : ITypeRegistrar
 
     public ITypeResolver Build() =>
         _provider is not null
-            ? new TypeResolver(_provider)
-            : new TypeResolver(_services!.BuildServiceProvider());
+            ? new TypeResolver(_provider, ownsProvider: false)
+            : new TypeResolver(_services!.BuildServiceProvider(), ownsProvider: true);
 
     public void Register(Type service, Type implementation)
     {
@@ -33,10 +33,25 @@ public sealed class TypeRegistrar : ITypeRegistrar
     }
 }
 
-public sealed class TypeResolver(IServiceProvider provider) : ITypeResolver, IDisposable
+public sealed class TypeResolver : ITypeResolver, IDisposable
 {
-    public object? Resolve(Type? type) =>
-        type is null ? null : provider.GetService(type);
+    private readonly IServiceProvider _provider;
+    private readonly bool _ownsProvider;
 
-    public void Dispose() => (provider as IDisposable)?.Dispose();
+    public TypeResolver(IServiceProvider provider, bool ownsProvider)
+    {
+        _provider = provider;
+        _ownsProvider = ownsProvider;
+    }
+
+    public object? Resolve(Type? type) =>
+        type is null ? null : _provider.GetService(type);
+
+    public void Dispose()
+    {
+        if (_ownsProvider && _provider is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
 }

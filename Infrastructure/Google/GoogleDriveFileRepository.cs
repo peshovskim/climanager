@@ -62,7 +62,7 @@ public sealed class GoogleDriveFileRepository(IGoogleDriveClientFactory driveCli
         do
         {
             var request = service.Files.List();
-            request.Q = GoogleDriveQuery.NameContains(query.Trim());
+            request.Q = GoogleDriveQuery.NameContainsFilesAndFolders(query.Trim());
             request.Fields = ListFields;
             request.PageSize = 100;
             request.PageToken = pageToken;

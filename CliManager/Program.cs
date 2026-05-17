@@ -19,6 +19,8 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddTransient<AuthCommand>();
 builder.Services.AddTransient<SyncCommand>();
+builder.Services.AddTransient<SearchCommand>();
+builder.Services.AddTransient<UploadCommand>();
 
 using var host = builder.Build();
 
@@ -34,6 +36,12 @@ app.Configure(config =>
 
     config.AddCommand<SyncCommand>("sync")
         .WithDescription("Download all files from Google Drive to the local MyDrive folder.");
+
+    config.AddCommand<SearchCommand>("search")
+        .WithDescription("Search Google Drive by name and show local sync status.");
+
+    config.AddCommand<UploadCommand>("upload")
+        .WithDescription("Upload a local file to a folder path in Google Drive (creates folders if needed).");
 });
 
 return await app.RunAsync(args);

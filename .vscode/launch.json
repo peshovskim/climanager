@@ -9,7 +9,33 @@
       "program": "${workspaceFolder}/CliManager/bin/Debug/net8.0/CliManager.dll",
       "args": ["auth"],
       "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "CliManager: upload",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/CliManager/bin/Debug/net8.0/CliManager.dll",
+      "args": ["upload", "MyDrive/example.txt", "Uploads"],
+      "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
+    },
+    {
+      "name": "CliManager: search",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/CliManager/bin/Debug/net8.0/CliManager.dll",
+      "args": ["search", "test"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
     },
     {
       "name": "CliManager: sync",
