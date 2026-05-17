@@ -1,14 +1,18 @@
 using CliManager.Application.Common.Abstractions;
 using CliManager.Application.Drive.Interfaces;
+using CliManager.Application.Drive.Options;
 using CliManager.Application.Drive.Repositories;
 using CliManager.Infrastructure.Auth;
+using CliManager.Infrastructure.Google;
 using CliManager.Infrastructure.Options;
+using CliManager.Infrastructure.Paths;
 using CliManager.Infrastructure.Persistence;
 using CliManager.Infrastructure.Persistence.Repositories;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace CliManager.Infrastructure;
 
@@ -41,10 +45,33 @@ public static class DependencyInjection
         services.AddScoped<ISyncEntryRepository, SyncEntryRepository>();
         services.AddEfUnitOfWork<CliManagerDbContext>();
 
-        services.AddOptions<GoogleAuthOptions>()
-            .Bind(configuration.GetSection(GoogleAuthOptions.SectionName));
+        services.AddOptions<SyncOptions>()
+            .Bind(configuration.GetSection(SyncOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                options.DownloadsPath = RepositoryPaths.Resolve(options.DownloadsPath);
+                Directory.CreateDirectory(options.DownloadsPath);
+            });
 
-        services.AddSingleton<IGoogleAuthService, GoogleAuthService>();
+        services.AddOptions<GoogleAuthOptions>()
+            .Bind(configuration.GetSection(GoogleAuthOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                options.ClientSecretPath = GoogleAuthPathResolver.ResolveSecretPath(
+                    RepositoryPaths.Root,
+                    options.ClientSecretPath);
+                options.TokenStorePath = RepositoryPaths.Resolve(options.TokenStorePath);
+                Directory.CreateDirectory(options.TokenStorePath);
+            });
+
+        services.AddSingleton<GoogleAuthService>();
+        services.AddSingleton<IGoogleAuthService>(static sp =>
+            sp.GetRequiredService<GoogleAuthService>());
+        services.AddSingleton<IGoogleCredentialSource>(static sp =>
+            sp.GetRequiredService<GoogleAuthService>());
+
+        services.AddSingleton<IGoogleDriveClientFactory, GoogleDriveClientFactory>();
+        services.AddScoped<IDriveFileRepository, GoogleDriveFileRepository>();
 
         return services;
     }

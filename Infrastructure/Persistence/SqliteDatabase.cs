@@ -1,3 +1,4 @@
+using CliManager.Infrastructure.Paths;
 using Microsoft.Data.Sqlite;
 
 namespace CliManager.Infrastructure.Persistence;
@@ -16,8 +17,7 @@ internal static class SqliteDatabase
             return connectionString;
         }
 
-        builder.DataSource = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, dataSource));
+        builder.DataSource = RepositoryPaths.Resolve(dataSource);
 
         return builder.ConnectionString;
     }

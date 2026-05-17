@@ -12,6 +12,16 @@
       "console": "integratedTerminal"
     },
     {
+      "name": "CliManager: sync",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/CliManager/bin/Debug/net8.0/CliManager.dll",
+      "args": ["sync"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
       "name": "CliManager: help",
       "type": "coreclr",
       "request": "launch",

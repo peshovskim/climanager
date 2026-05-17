@@ -3,27 +3,23 @@ using CliManager.Infrastructure.Options;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Util.Store;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace CliManager.Infrastructure.Auth;
 
-public sealed class GoogleAuthService : IGoogleAuthService
+public sealed class GoogleAuthService : IGoogleAuthService, IGoogleCredentialSource
 {
     private static readonly string[] Scopes = [DriveService.Scope.Drive];
 
     private readonly GoogleAuthOptions _options;
 
-    private readonly string _contentRoot;
-
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     private UserCredential? _credential;
 
-    public GoogleAuthService(IOptions<GoogleAuthOptions> options, IHostEnvironment hostEnvironment)
+    public GoogleAuthService(IOptions<GoogleAuthOptions> options)
     {
         _options = options.Value;
-        _contentRoot = hostEnvironment.ContentRootPath;
     }
 
     public async Task EnsureAuthenticatedAsync(CancellationToken cancellationToken = default)
@@ -47,16 +43,8 @@ public sealed class GoogleAuthService : IGoogleAuthService
                 return _credential;
             }
 
-            string clientSecretPath = ResolvePath(_options.ClientSecretPath);
-
-            if (!File.Exists(clientSecretPath))
-            {
-                throw new FileNotFoundException("OAuth client secret file not found");
-            }
-
-            string tokenStorePath = ResolvePath(_options.TokenStorePath);
-
-            Directory.CreateDirectory(tokenStorePath);
+            string clientSecretPath = _options.ClientSecretPath;
+            string tokenStorePath = _options.TokenStorePath;
 
             await using var stream = new FileStream(
                 clientSecretPath,
@@ -81,13 +69,4 @@ public sealed class GoogleAuthService : IGoogleAuthService
         }
     }
 
-    private string ResolvePath(string path)
-    {
-        if (Path.IsPathRooted(path))
-        {
-            return path;
-        }
-    
-        return Path.GetFullPath(Path.Combine(_contentRoot, path));
-    }
 }
