@@ -1,3 +1,5 @@
+using CliManager.Application.Drive.Interfaces;
+using CliManager.Infrastructure.Auth;
 using CliManager.Infrastructure.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,11 @@ public static class DependencyInjection
                 options.ConnectionString =
                     config.GetConnectionString("DefaultConnection") ?? string.Empty;
             });
+
+        services.AddOptions<GoogleAuthOptions>()
+            .Bind(configuration.GetSection(GoogleAuthOptions.SectionName));
+
+        services.AddSingleton<IGoogleAuthService, GoogleAuthService>();
 
         return services;
     }
