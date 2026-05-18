@@ -76,7 +76,7 @@ climanager/
 ├── client_secret.json       # you provide (gitignored)
 ├── Downloads/                 # synced / local files (contents gitignored)
 └── .climanager/             # created on first run (gitignored)
-    ├── climanager.db        # sync manifest (SQLite)
+    ├── climanager.db        # sync entries (SQLite, SyncEntry table)
     └── tokens/              # OAuth tokens
 ```
 
@@ -137,8 +137,8 @@ The solution follows **Clean Architecture** (dependency rule: inner layers do no
 |---------|----------------------|
 | **Clean Architecture** | Separates CLI, business logic, and Google/SQLite adapters. |
 | **CQRS + MediatR** | `auth` / `sync` / `upload` are commands; `search` is a query. Handlers live in Application. |
-| **Repository** | `IDriveFileRepository`, `ISyncEntryRepository` abstract Drive and manifest access. |
-| **Unit of Work** | `IUnitOfWork` coordinates `SaveChangesAsync` after manifest updates. |
+| **Repository** | `IDriveFileRepository`, `ISyncEntryRepository` abstract Drive and sync entry access. |
+| **Unit of Work** | `IUnitOfWork` coordinates `SaveChangesAsync` after sync entry updates. |
 | **Result** | Handlers return `Result` / `Result<T>` instead of throwing for expected failures. |
 | **Options** | `SyncOptions`, `GoogleAuthOptions` from `appsettings.json`. |
 
@@ -155,7 +155,7 @@ var parallelOptions = new ParallelOptions
 
 await Parallel.ForEachAsync(files, parallelOptions, async (file, ct) =>
 {
-    // download + update manifest per file
+    // download + upsert SyncEntry per file
 });
 ```
 
@@ -175,7 +175,7 @@ await Parallel.ForEachAsync(files, parallelOptions, async (file, ct) =>
 
 ### Search state (`search`)
 
-Whether a file is downloaded is determined from the **SQLite manifest** (`SyncEntry`) plus **`File.Exists`** on the stored local path. Files without a manifest row or missing on disk are printed with **`[Not Downloaded]`**.
+Whether a file is downloaded is determined from the **SQLite sync entries** (`SyncEntry` table) plus **`File.Exists`** on the stored local path. Files without a sync entry or missing on disk are printed with **`[Not Downloaded]`**.
 
 ### Error handling
 
@@ -211,4 +211,4 @@ SQLite is created automatically on startup (`EnsureCreated`). No EF migrations. 
 - `Google.Apis.Auth` — OAuth 2.0
 - `MediatR` — CQRS dispatch
 - `Spectre.Console.Cli` — CLI parsing and output
-- `Microsoft.EntityFrameworkCore.Sqlite` — local sync manifest
+- `Microsoft.EntityFrameworkCore.Sqlite` — local sync entries (`SyncEntry`)
