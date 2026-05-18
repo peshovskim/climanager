@@ -1,4 +1,5 @@
 using CliManager.Application.Drive.Commands.SyncFiles;
+using CliManager.Common;
 using MediatR;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -15,8 +16,7 @@ public sealed class SyncCommand(IMediator mediator) : AsyncCommand
 
         if (result.IsFailure)
         {
-            AnsiConsole.MarkupLine($"[red]{Markup.Escape(result.Error!.Message)}[/]");
-            return 1;
+            return ResultConsole.WriteFailure(result);
         }
 
         var stats = result.Value!;

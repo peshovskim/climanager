@@ -1,4 +1,5 @@
 using CliManager.Application.Drive.Commands.UploadFile;
+using CliManager.Common;
 using MediatR;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -27,8 +28,7 @@ public sealed class UploadCommand(IMediator mediator) : AsyncCommand<UploadSetti
 
         if (result.IsFailure)
         {
-            AnsiConsole.MarkupLine($"[red]{Markup.Escape(result.Error!.Message)}[/]");
-            return 1;
+            return ResultConsole.WriteFailure(result);
         }
 
         var upload = result.Value!;

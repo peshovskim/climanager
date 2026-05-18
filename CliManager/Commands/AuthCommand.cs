@@ -1,4 +1,5 @@
 using CliManager.Application.Drive.Commands.Authenticate;
+using CliManager.Common;
 using MediatR;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -13,9 +14,7 @@ public sealed class AuthCommand(IMediator mediator) : AsyncCommand
 
         if (result.IsFailure)
         {
-            AnsiConsole.MarkupLine($"[red]{Markup.Escape(result.Error!.Message)}[/]");
-
-            return 1;
+            return ResultConsole.WriteFailure(result);
         }
 
         AnsiConsole.MarkupLine("[green]Google Drive authentication succeeded.[/]");

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using CliManager.Application.Common;
 using CliManager.Application.Common.Abstractions;
 using CliManager.Application.Drive.Interfaces;
 using CliManager.Application.Drive.Options;
@@ -113,13 +114,9 @@ public sealed class SyncFilesCommandHandler(
                     removedLocalFiles,
                     stopwatch.Elapsed));
         }
-        catch (FileNotFoundException ex)
-        {
-            return Result<SyncResultResponse>.Invalid(ResultCodes.Validation, ex.Message);
-        }
         catch (Exception ex)
         {
-            return Result<SyncResultResponse>.InternalError(ResultCodes.InternalError, ex.Message);
+            return DriveCommandResults.FromException<SyncResultResponse>(ex);
         }
     }
 

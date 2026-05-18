@@ -20,7 +20,7 @@
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/CliManager/bin/Debug/net8.0/CliManager.dll",
-      "args": ["upload", "MyDrive/example.txt", "Uploads"],
+      "args": ["upload", "Downloads/example.txt", "Uploads"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },

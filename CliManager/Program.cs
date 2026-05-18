@@ -35,7 +35,7 @@ app.Configure(config =>
         .WithDescription("Sign in to Google Drive (OAuth 2.0).");
 
     config.AddCommand<SyncCommand>("sync")
-        .WithDescription("Download all files from Google Drive to the local MyDrive folder.");
+        .WithDescription("Download all files from Google Drive to the local Downloads folder.");
 
     config.AddCommand<SearchCommand>("search")
         .WithDescription("Search Google Drive by name and show local sync status.");

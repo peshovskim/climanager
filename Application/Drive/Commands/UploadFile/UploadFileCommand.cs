@@ -1,3 +1,4 @@
+using CliManager.Application.Common;
 using CliManager.Application.Common.Abstractions;
 using CliManager.Application.Drive.Interfaces;
 using CliManager.Application.Drive.Repositories;
@@ -77,17 +78,9 @@ public sealed class UploadFileCommandHandler(
                     uploaded.Name,
                     string.IsNullOrEmpty(driveFolderPath) ? "/" : driveFolderPath));
         }
-        catch (FileNotFoundException ex)
-        {
-            return Result<UploadFileResponse>.NotFound(ResultCodes.NotFound, ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            return Result<UploadFileResponse>.Invalid(ResultCodes.Validation, ex.Message);
-        }
         catch (Exception ex)
         {
-            return Result<UploadFileResponse>.InternalError(ResultCodes.InternalError, ex.Message);
+            return DriveCommandResults.FromException<UploadFileResponse>(ex);
         }
     }
 }

@@ -1,4 +1,5 @@
 using CliManager.Application.Drive.Queries.SearchFiles;
+using CliManager.Common;
 using MediatR;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -22,8 +23,7 @@ public sealed class SearchCommand(IMediator mediator) : AsyncCommand<SearchSetti
 
         if (result.IsFailure)
         {
-            AnsiConsole.MarkupLine($"[red]{Markup.Escape(result.Error!.Message)}[/]");
-            return 1;
+            return ResultConsole.WriteFailure(result);
         }
 
         IReadOnlyList<Application.Drive.Responses.SearchFileReadModel> items = result.Value!;

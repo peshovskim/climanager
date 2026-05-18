@@ -76,8 +76,8 @@ Desktop.ini
 
 ## CliManager — local data & secrets
 Downloads/
-MyDrive/*
-!MyDrive/.gitkeep
+Downloads/*
+!Downloads/.gitkeep
 *.db
 *.db-shm
 *.db-wal

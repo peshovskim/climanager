@@ -1,3 +1,4 @@
+using CliManager.Application.Common;
 using CliManager.Application.Drive.Interfaces;
 using MediatR;
 using SharedKernel;
@@ -15,16 +16,12 @@ public sealed class AuthenticateCommandHandler(IGoogleAuthService googleAuthServ
         try
         {
             await googleAuthService.EnsureAuthenticatedAsync(cancellationToken);
-            
+
             return Result.Success();
-        }
-        catch (FileNotFoundException ex)
-        {
-            return Result.Invalid(ResultCodes.Validation, ex.Message);
         }
         catch (Exception ex)
         {
-            return Result.InternalError(ResultCodes.InternalError, ex.Message);
+            return DriveCommandResults.FromException(ex);
         }
     }
 }

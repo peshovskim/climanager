@@ -1,3 +1,4 @@
+using CliManager.Application.Common;
 using CliManager.Application.Drive.Interfaces;
 using CliManager.Application.Drive.Repositories;
 using CliManager.Application.Drive.Responses;
@@ -58,9 +59,7 @@ public sealed class SearchFilesQueryHandler(
         }
         catch (Exception ex)
         {
-            return Result<IReadOnlyList<SearchFileReadModel>>.InternalError(
-                ResultCodes.InternalError,
-                ex.Message);
+            return DriveCommandResults.FromException<IReadOnlyList<SearchFileReadModel>>(ex);
         }
     }
 
