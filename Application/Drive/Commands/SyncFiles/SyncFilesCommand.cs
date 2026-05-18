@@ -43,8 +43,8 @@ public sealed class SyncFilesCommandHandler(
             string downloadsRoot = syncOptions.Value.DownloadsPath;
             Directory.CreateDirectory(downloadsRoot);
 
-            IReadOnlyDictionary<string, SyncEntry> manifestByDriveId =
-                await LoadManifestAsync(cancellationToken);
+            IReadOnlyDictionary<string, SyncEntry> syncEntriesByDriveId =
+                await LoadSyncEntriesAsync(cancellationToken);
 
             var driveFileIds = files
                 .Select(file => file.Id)
@@ -61,7 +61,7 @@ public sealed class SyncFilesCommandHandler(
                 try
                 {
                     string localPath = ResolveLocalPath(downloadsRoot, file.Name);
-                    manifestByDriveId.TryGetValue(file.Id, out SyncEntry? existingEntry);
+                    syncEntriesByDriveId.TryGetValue(file.Id, out SyncEntry? existingEntry);
 
                     if (IsUnchanged(file, existingEntry, localPath))
                     {
@@ -120,7 +120,7 @@ public sealed class SyncFilesCommandHandler(
         }
     }
 
-    private async Task<IReadOnlyDictionary<string, SyncEntry>> LoadManifestAsync(
+    private async Task<IReadOnlyDictionary<string, SyncEntry>> LoadSyncEntriesAsync(
         CancellationToken cancellationToken)
     {
         using IServiceScope scope = scopeFactory.CreateScope();
