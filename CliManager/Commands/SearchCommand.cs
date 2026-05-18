@@ -50,7 +50,7 @@ public sealed class SearchCommand(IMediator mediator) : AsyncCommand<SearchSetti
             }
 
             AnsiConsole.MarkupLine(
-                $"{Markup.Escape(item.Name)} [yellow][Not Downloaded][/]");
+                $"{Markup.Escape(item.Name)} [yellow][[Not Downloaded]][/]");
         }
 
         return 0;

@@ -7,9 +7,6 @@ internal static class GoogleDriveQuery
 
     public const string NonTrashed = "trashed = false";
 
-    public static string NameContainsFiles(string query) =>
-        $"{NonFolderFiles} and name contains '{Escape(query)}'";
-
     public static string NameContainsFilesAndFolders(string query) =>
         $"{NonTrashed} and name contains '{Escape(query)}'";
 

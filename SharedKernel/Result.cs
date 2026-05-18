@@ -45,26 +45,6 @@ public class Result
 
     public static Result InternalError(string code, string message) =>
         Failure(new ResultError(ResultType.InternalError, code, message));
-
-    public static Result<T> FromError<T>(Result result)
-    {
-        if (result.IsSuccess)
-        {
-            throw new InvalidOperationException("Cannot lift a successful non-generic result to Result<T>.");
-        }
-
-        return Result<T>.Failure(result.Error!);
-    }
-
-    public static Result<TDest> FromError<TSrc, TDest>(Result<TSrc> result)
-    {
-        if (result.IsSuccess)
-        {
-            throw new InvalidOperationException("Cannot lift a successful result to another value type without a value.");
-        }
-
-        return Result<TDest>.Failure(result.Error!);
-    }
 }
 
 public sealed class Result<T> : Result

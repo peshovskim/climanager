@@ -33,18 +33,18 @@ public sealed class UploadFileCommandHandler(
 
         string localPath = Path.GetFullPath(command.LocalPath);
 
-        if (!File.Exists(localPath))
-        {
-            return Result<UploadFileResponse>.NotFound(
-                ResultCodes.NotFound,
-                $"Local file not found: {localPath}");
-        }
-
         if (Directory.Exists(localPath))
         {
             return Result<UploadFileResponse>.Invalid(
                 ResultCodes.Validation,
                 "Local path must be a file, not a directory.");
+        }
+
+        if (!File.Exists(localPath))
+        {
+            return Result<UploadFileResponse>.NotFound(
+                ResultCodes.NotFound,
+                $"Local file not found: {localPath}");
         }
 
         try

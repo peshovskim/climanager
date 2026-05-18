@@ -2,7 +2,6 @@ namespace SharedKernel;
 
 public enum ResultType
 {
-    Ok,
     Invalid,
     NotFound,
     Conflicted,

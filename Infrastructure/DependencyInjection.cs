@@ -29,13 +29,6 @@ public static class DependencyInjection
                 "Connection string 'DefaultConnection' is missing or empty.");
         }
 
-        services.AddOptions<DatabaseOptions>()
-            .Configure<IConfiguration>((options, config) =>
-            {
-                options.ConnectionString =
-                    config.GetConnectionString("DefaultConnection") ?? string.Empty;
-            });
-
         var sqliteConnectionString = SqliteDatabase.ResolveConnectionString(connectionString);
         SqliteDatabase.EnsureDataDirectory(sqliteConnectionString);
 
